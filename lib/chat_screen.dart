@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:velocity_x/velocity_x.dart';
 
 import 'chat_messae.dart';
@@ -19,6 +20,7 @@ class _ChatScreenState extends State<ChatScreen> {
   ChatGPT? chatGPT;
 
   StreamSubscription? _subscription;
+  bool _isTyping = false;
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ChatMessage(text: _chatController.text, sender: "user");
     setState(() {
       _messages.insert(0, message);
+      _isTyping = true;
     });
 
     _chatController.clear();
@@ -47,13 +50,14 @@ class _ChatScreenState extends State<ChatScreen> {
       max_tokens: 200,
     );
     _subscription = chatGPT!
-        .builder('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')
+        .builder('')
         .onCompleteStream(request: request)
         .listen((response) {
       ChatMessage botMessage =
           ChatMessage(text: response?.choices[0].text ?? " ", sender: 'Bot');
 
       setState(() {
+        _isTyping = false;
         _messages.insert(0, botMessage);
       });
     });
@@ -93,13 +97,14 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 return _messages[index];
-                // return Container(
-                //   height: 50,
-                //   color: Colors.red,
-                // ).p12();
               },
             ),
           ),
+          _isTyping
+              ? LoadingAnimationWidget.dotsTriangle(
+                  color: Colors.green, size: 50)
+              : const SizedBox(height: 0, width: 0),
+          const Divider(height: 1.0),
           Container(
             decoration: BoxDecoration(
               color: context.cardColor,
